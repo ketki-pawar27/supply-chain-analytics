@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safety Stock Calculator | Ketki Pawar</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 2rem 1rem; }
+  .container { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 1.5rem; }
+  .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 1rem; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  .grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin: 1rem 0; }
+  label { font-size: 13px; color: #555; display: block; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; color: #1a1a1a; background: #fff; }
+  input:focus, select:focus { outline: none; border-color: #185FA5; box-shadow: 0 0 0 2px #E6F1FB; }
+  .metric { background: #f8f8f8; border-radius: 8px; padding: 0.75rem 1rem; }
+  .metric-lbl { font-size: 12px; color: #666; margin-bottom: 4px; }
+  .metric-val { font-size: 24px; font-weight: 600; color: #1a1a1a; }
+  .metric-unit { font-size: 12px; color: #888; margin-top: 2px; }
+  .bar-label { font-size: 13px; color: #555; margin-bottom: 6px; }
+  .bar-track { background: #f0f0f0; border-radius: 4px; height: 20px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s, background 0.3s; background: #3B6D11; }
+  .bar-scale { display: flex; justify-content: space-between; font-size: 11px; color: #999; margin-top: 4px; }
+  .formula-box { background: #f8f8f8; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1rem; }
+  .formula-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .formula-text { font-size: 14px; color: #333; font-family: 'Courier New', monospace; }
+  .formula-sub { font-size: 12px; color: #888; margin-top: 4px; }
+  .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; margin-top: 6px; }
+  .low { background: #EAF3DE; color: #3B6D11; }
+  .med { background: #FAEEDA; color: #854F0B; }
+  .high { background: #FCEBEB; color: #A32D2D; }
+  .footer { font-size: 12px; color: #999; text-align: center; margin-top: 1.5rem; }
+  .footer a { color: #185FA5; text-decoration: none; }
+  @media (max-width: 500px) {
+    .grid3 { grid-template-columns: 1fr; }
+    .grid4 { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Safety Stock Calculator</h1>
+  <p class="subtitle">Calculate optimal safety stock levels based on demand variability and lead time deviation</p>
+
+  <div class="card">
+    <div class="card-title">Inputs</div>
+    <div class="grid3">
+      <div>
+        <label>Avg daily demand (units)</label>
+        <input type="number" id="demand" value="100" min="1" oninput="calc()">
+      </div>
+      <div>
+        <label>Lead time deviation (days)</label>
+        <input type="number" id="ltdev" value="2" min="0" step="0.5" oninput="calc()">
+      </div>
+      <div>
+        <label>Service level target</label>
+        <select id="sl" onchange="calc()">
+          <option value="1.65">95% (Z = 1.65)</option>
+          <option value="1.28">90% (Z = 1.28)</option>
+          <option value="2.05">98% (Z = 2.05)</option>
+          <option value="2.33">99% (Z = 2.33)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Results</div>
+    <div class="grid4">
+      <div class="metric">
+        <div class="metric-lbl">Safety stock</div>
+        <div class="metric-val" id="ss">330</div>
+        <div class="metric-unit">units</div>
+      </div>
+      <div class="metric">
+        <div class="metric-lbl">Reorder point</div>
+        <div class="metric-val" id="rop">1,330</div>
+        <div class="metric-unit">units</div>
+      </div>
+      <div class="metric">
+        <div class="metric-lbl">Days of buffer</div>
+        <div class="metric-val" id="cover">3.3</div>
+        <div class="metric-unit">days</div>
+      </div>
+      <div class="metric">
+        <div class="metric-lbl">Risk level</div>
+        <span id="badge" class="badge low">Low</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 1rem;">
+      <div class="bar-label">Safety stock as % of monthly demand</div>
+      <div class="bar-track">
+        <div id="bar" class="bar-fill" style="width: 11%;"></div>
+      </div>
+      <div class="bar-scale">
+        <span>0%</span>
+        <span>Recommended: 10-30%</span>
+        <span>100%</span>
+      </div>
+    </div>
+
+    <div class="formula-box">
+      <div class="formula-title">Formula breakdown</div>
+      <div class="formula-text" id="formula">Safety Stock = 1.65 x 2 x 100 = 330 units</div>
+      <div class="formula-sub">Z score x Lead time deviation x Avg daily demand</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Built by <a href="https://linkedin.com/in/ketkipawar-8a31941a" target="_blank">Ketki Pawar</a> |
+    Supply Chain Analytics Professional |
+    <a href="https://github.com/ketki-pawar27/supply-chain-analytics" target="_blank">View on GitHub</a>
+  </div>
+</div>
+
+<script>
+function calc() {
+  const d = parseFloat(document.getElementById('demand').value) || 0;
+  const lt = parseFloat(document.getElementById('ltdev').value) || 0;
+  const z = parseFloat(document.getElementById('sl').value) || 1.65;
+  const ss = Math.round(z * lt * d);
+  const rop = Math.round(ss + (10 * d));
+  const cover = d > 0 ? parseFloat((ss / d).toFixed(1)) : 0;
+  const pct = d > 0 ? Math.min(Math.round((ss / (d * 30)) * 100), 100) : 0;
+
+  document.getElementById('ss').textContent = ss.toLocaleString();
+  document.getElementById('rop').textContent = rop.toLocaleString();
+  document.getElementById('cover').textContent = cover;
+  document.getElementById('formula').textContent =
+    'Safety Stock = ' + z + ' x ' + lt + ' x ' + d + ' = ' + ss.toLocaleString() + ' units';
+
+  const bar = document.getElementById('bar');
+  const badge = document.getElementById('badge');
+  bar.style.width = pct + '%';
+
+  if (ss > 500) {
+    badge.className = 'badge high'; badge.textContent = 'High buffer';
+    bar.style.background = '#A32D2D';
+  } else if (ss > 100) {
+    badge.className = 'badge med'; badge.textContent = 'Medium buffer';
+    bar.style.background = '#854F0B';
+  } else {
+    badge.className = 'badge low'; badge.textContent = 'Low buffer';
+    bar.style.background = '#3B6D11';
+  }
+}
+</script>
+</body>
+</html>
