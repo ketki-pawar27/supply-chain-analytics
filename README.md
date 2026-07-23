@@ -32,4 +32,4 @@ Track On Time In Full delivery performance by supplier and product.
 ## About
 Built by Ketki Pawar — Supply Chain Data Analyst with 2.5 years supporting 
 pharmaceutical supply chain analytics via Cognizant.
-LinkedIn: https://linkedin.com/in/ketkipawar-8a31941a
+LinkedIn: www.linkedin.com/in/ketki-pawar
